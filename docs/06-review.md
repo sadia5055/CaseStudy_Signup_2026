@@ -54,7 +54,7 @@ Lesson recorded: the local runs all passed because my machine matched the assump
 | C | I-02 only asserts "4xx and an error is shown". | The intended duplicate behaviour is an open question to nesto (C-1 in the bug reports); pinning `400` would encode a guess. |
 | D | I-01a depends on a backend rule about placeholder domains. | It tests a real rejection without mocking; it will need revising if the rule changes. |
 | E | Error messages pin the current "letters" wording (BUG-3). | The tests need some expected text; the hint with the typo is matched by pattern instead. |
-| F | CI has run twice, on GitHub-hosted Ubuntu runners only: the first run failed (findings 12–14), the next passed all six jobs. One green run is not a stability record. | Needs more runs over time, including at different hours. |
+| F | CI has run twice, on GitHub-hosted Ubuntu runners only: the first run [failed](https://github.com/sadia5055/CaseStudy_Signup_2026/actions/runs/44118433451) (findings 12–14), the next [passed all six jobs](https://github.com/sadia5055/CaseStudy_Signup_2026/actions/runs/44128638174). One green run is not a stability record. | Needs more runs over time, including at different hours. |
 | G | Client-side validation only. | Server-side checks would mean bypassing the form. |
 | H | Phones are Playwright emulations, not real devices; tablets, landscape and the hamburger breakpoint width are not covered. | Real devices need a device cloud; listed as the next step. A full run also creates 30 accounts in QA, so `npm run test:chrome` exists for quick runs. |
 
