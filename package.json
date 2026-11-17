@@ -1,18 +1,31 @@
 {
-  "name": "demo_playwright_ts",
+  "name": "nesto-signup-e2e",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Playwright + TypeScript tests for the nesto QA signup page (EN/FR), including the account-creation API.",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "playwright test",
+    "test:en": "playwright test --project=en",
+    "test:fr": "playwright test --project=fr",
+    "test:ui": "playwright test tests/ui",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "report": "playwright show-report"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.65.1",
     "@types/node": "^26.6.6",
-    "typescript": "^7.0.2",
+    "eslint": "^10.15.0",
+    "eslint-plugin-playwright": "^2.12.2",
+    "prettier": "^3.10.1",
+    "typescript": "~6.0",
+    "typescript-eslint": "^8.73.0",
     "zod": "^4.6.7"
+  },
+  "private": true,
+  "engines": {
+    "node": ">=20"
   }
 }

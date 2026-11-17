@@ -22,6 +22,6 @@ Format: context → choice → trade-off. Newest at the bottom.
 
 **D10 — Default `data-testid`, used sparingly.** The app already exposes `data-testid`, which is Playwright's default, so no config is needed. Accessible locators come first; test ids are for controls whose accessible name is weak.
 
-**D11 — Wait for hydration before filling.** Discovery showed values typed before hydration are lost, which looks like a validation bug but is a test timing issue. The page object waits for the form to be interactive and verifies a value stuck before submitting; it does not use fixed sleeps.
+**D11 — Wait for the geolocation response, then fill and verify.** The form re-initialises after the page loads: values typed too early are wiped, which shows up as unrelated "required" errors and looks like a validation bug. A first fix (wait for React hydration, verify each value after filling) still failed 8 of 40 runs, with a different set of tests each time, so the reset happens after the point where a value can be verified. Every load calls `GET /api/geolocation/all`; waiting for that response before interacting made the UI suite pass 120 of 120 runs (20 tests × 2 languages × 3 repeats). The cause is inferred from that result, not proven from the app's source. The page object also keeps a fill-and-verify loop (`toPass`) for the phone field, which reformats input. No fixed sleeps.
 
 **D12 — Retries.** 0 locally, 1 in CI with trace on first retry. Intermittent failures are investigated (see the reliability notes in the review), not hidden.
