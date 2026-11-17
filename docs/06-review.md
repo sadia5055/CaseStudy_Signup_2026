@@ -37,6 +37,19 @@ The first GitHub Actions run (commit `e900887`) failed on all five jobs. Three c
 
 Lesson recorded: the local runs all passed because my machine matched the assumptions. An environment-dependent default and a slow third-party hop were both invisible until the suite ran somewhere else.
 
+## Found by the pre-publication security audit
+
+| # | Finding | How it was found | Outcome |
+|---|---|---|---|
+| 16 | The generated passwords were in the step titles of the HTML report that CI uploaded on **every** run. My earlier D16 said only failures leaked and accepted it; both were wrong. | A scratch run of passing tests with the CI configuration, scanned for the generated format; then a canary lab measuring each Playwright mechanism. | Entered through `evaluate`; the report no longer holds them ([D22](04-decisions.md), [07](07-security-remediation.md)). D16 rewritten. |
+| 17 | `error-context.md` copied typed values from the page into every failing test's output. | Same scan. | `PLAYWRIGHT_NO_COPY_PROMPT=1`; pinned by the security test. |
+| 18 | I assumed boxed test steps might hide the values. They do not. | Measured in the lab (T03). | Not used. |
+| 19 | Assertions such as `toHaveValue(secret)` and `toMatchObject` print values into logs and reports. | Lab scenarios T07 and T11. | Field-name and boolean comparisons. |
+| 20 | `toHaveURL` in P-01 prints the full URL on failure, which after signup can carry OAuth `code` and `state` into public logs. | My own skeptical review of the remediation, after the security test was green. | `expectToLandOn` prints the path only; scenario C6 and mutation M5 guard it. |
+| 21 | Three `en-firefox` timeouts in a loaded 4-worker run. | Failed local run, then timing, worker-count and old/new-code experiments. | CPU contention, not QA or test logic; workers capped at 2 ([D25](04-decisions.md), [08](08-firefox-reliability.md)). |
+
+Final full run on the remediated code: 300/300 executions passed, 0 failed, 0 flaky, 0 retried, in 7.0 min 52.0 s (2 workers, CPU average 63%, slowest execution 17.4 s against the 60 s limit; Firefox median 3.0 s, p90 5.9 s).
+
 ## Checked and holding
 
 - **Assertions can fail.** Changing the expected `preferredLanguage` made P-01 fail with `- "fr" / + "en"`; reverted.
@@ -61,3 +74,30 @@ Lesson recorded: the local runs all passed because my machine matched the assump
 ## Open
 
 - Questions for nesto are collected in `ASSUMPTIONS.md` (A2, A4–A7) and `05-bug-reports.md` (section B).
+
+## Skeptical Staff SDET review of the remediation
+
+I reviewed this as a Staff SDET at nesto would, looking for what could still hurt the candidate or the company.
+
+**Blockers before submission** (none is a code defect; all need the repository owner or nesto):
+
+1. **The 27 artifacts with working credentials are still downloadable** by any signed-in GitHub user until they are deleted or expire (24 November and 1 December). Only the owner can delete them; the command and steps are in [07](07-security-remediation.md).
+2. **Up to 132 QA accounts still have exposed passwords.** Only nesto can deactivate them. They have not been told yet. The presentation's open-points slide carries the request; it should also be in the submission email.
+3. **Nothing remediated is public until it is pushed.** The public repository still holds the old workflow, the wrong D16 and the raw uploads. Until pushed, every CI run publishes raw reports.
+4. **The remediated workflow has never run on GitHub.** The security job needs Chromium and the fake server on a Linux runner; the summary, gate, upload, fork guard and `contents: read` change are untested there. The first push will also create 30 QA accounts. It should be watched, and the artifact it produces opened to confirm it holds only the summary.
+
+**What I verified and what I did not**
+
+- Verified by measurement: the leak mechanisms; that each protection is needed (five mutations turn the test red); that a real 300-execution report holds no password, email or token; that the summary and gate are clean on dirty input; the Firefox cause (contention) with a negative result for QA latency and for the test code.
+- Not verified: the GitHub artifacts themselves (no authentication); real CI behaviour of the new workflow; Firefox over many runs on a quiet machine (one clean full run is not proof, and the three original timeouts did not reproduce, so the trigger was not identified).
+
+**Residual weaknesses (accepted, documented)**
+
+- `PLAYWRIGHT_NO_COPY_PROMPT` is not a documented option and may change; the security test pins its effect and fails after a Playwright upgrade that breaks it.
+- The three secret fields are set through `evaluate`: no key events and no actionability checks. The suite no longer proves that real typing into those fields works.
+- The canary test uses a fake page. It proves the helpers and fixtures do not leak, not that a future new assertion cannot; the summary-only upload and the gate are the backstop.
+- Screenshots (local only) show the generated email and cannot be text-scanned.
+- `captureCreation` reads the response body after the response event; an instant redirect would lose it (reproduced on the fake server). The real app's Auth0 round trip makes this safe in practice.
+- Mailinator inboxes are public, so a generated address is guessable and readable by anyone until a controlled domain replaces it.
+
+**Verdict.** The code and documentation are in a state I would defend. The submission should wait for blockers 1 to 4: delete the artifacts, tell nesto about the accounts, push, and read the first CI run.

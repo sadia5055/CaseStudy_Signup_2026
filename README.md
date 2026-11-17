@@ -24,6 +24,7 @@ npm test
 | English on every device | `npm run test:en` |
 | French on every device | `npm run test:fr` |
 | UI specs only (creates no accounts) | `npm run test:ui` |
+| Security regression test: canary credentials must not reach any report, log or upload (no QA accounts) | `npm run test:security` |
 | One test, one device | `npx playwright test -g "P-01" --project=fr-iphone` |
 | One file | `npx playwright test tests/integration/signup-create.spec.ts` |
 | Open the HTML report | `npm run report` |
@@ -69,7 +70,7 @@ The success path is never mocked. Only failures are simulated.
 tests/ui · tests/integration   specs: arrange / act / assert
 src/fixtures                   one extended `test`: lang, copy, signupPage, newUser
 src/pages/signup.page.ts       DOM only
-src/api                        HTTP only: capture, contract, expected values, redaction
+src/api                        HTTP only: capture, contract, expected values, allowlisted diagnostics
 src/i18n                       en.ts / fr.ts against one Copy type (a missing translation fails the build)
 src/data · src/config          unique user data, environment
 ```
@@ -78,10 +79,12 @@ Language is a Playwright project (`en`, `fr`), so there is one set of specs and 
 
 ## Results so far
 
-- Local, Windows, all 10 projects (2 languages × desktop Chrome, Firefox, WebKit, Pixel 7, iPhone 14), after the fixes for the first CI run: **600/600 executions passed** (30 tests per project × 10 projects = 300 executions per full run, two full runs, parallel, 13 minutes). The run just before the last fix had 299/300 executions; the one failure (`fr-webkit` L-02) was traced to my own readiness check and fixed ([D21](docs/04-decisions.md)), then passed 80/80 when repeated. Earlier, before devices and the CI fixes, desktop Chrome passed 52/52 on four consecutive runs and a fresh `git clone` + `npm ci` passed typecheck, lint and format checks. All findings along the way are in [`docs/06-review.md`](docs/06-review.md).
+- **Latest full local run** (final code, Windows laptop, all 10 projects: 2 languages × Chrome, Firefox, WebKit, Pixel 7, iPhone 14): **300/300 executions passed** (30 tests per project × 10 projects), 0 failed, 0 retried, in 7.0 min 52.0 s with 2 workers. Slowest execution 17.4 s against the 60 s limit.
+- An earlier 4-worker run on a busy machine passed 297/300; the three failures were Firefox timeouts caused by CPU contention, not by the app or the tests ([docs/08-firefox-reliability.md](docs/08-firefox-reliability.md)). Two earlier full runs at 4 workers had passed 600/600.
+- **Security:** `npm run test:security` passes: canary credentials are found in no report, log or upload candidate, and five deliberate regressions each turn it red. The raw report of a real 300-execution run held no password, email or token ([docs/07-security-remediation.md](docs/07-security-remediation.md)).
+- **GitHub Actions:** the workflow before the security remediation ran six times. The first [failed](https://github.com/sadia5055/CaseStudy_Signup_2026/actions/runs/44118433451); the [second](https://github.com/sadia5055/CaseStudy_Signup_2026/actions/runs/44128638174) passed all six jobs, and runs 3 and 6 passed too (runs 4 and 5 were cancelled by newer pushes). **The remediated workflow (security job, summary upload, gate) has not run on GitHub yet.**
 - The first phone run found one real gap: the language switch is a hamburger-menu picker on phones, so F-04 failed on all four phone projects until the page object handled it ([D17](docs/04-decisions.md)). No layout defects were found on phones.
 - Mutation check: changing one expected value (`preferredLanguage`) fails P-01 with a field-level diff.
-- **GitHub Actions: the first run [failed](https://github.com/sadia5055/CaseStudy_Signup_2026/actions/runs/44118433451); after the fixes the next run [passed all six jobs](https://github.com/sadia5055/CaseStudy_Signup_2026/actions/runs/44128638174)** (static checks plus Chrome, Firefox, WebKit, Android and iPhone; run 2 on commit `c72bca2`). Causes of the first failure (details in [`docs/06-review.md`](docs/06-review.md)): the province default depends on the visitor's IP, so a US runner saw an empty select (F-02 was wrong; the location is now stubbed, F-05 covers the non-Canadian case); a geolocation wait timed out once; and the Auth0 redirect after signup is slower on CI than 10 s.
 
 ## Known limitations
 
@@ -90,7 +93,8 @@ Language is a Playwright project (`en`, `fr`), so there is one set of specs and 
 - **Geolocation is stubbed.** The form resets after `GET /api/geolocation/all` returns and pre-selects the province from the visitor's IP, which varies by machine and depends on third-party lookups, so the tests pin an Ontario location ([D19](docs/04-decisions.md)). The real lookup is not exercised. If the app stops calling that endpoint, `goto()` times out.
 - **"No request sent" is checked right after the errors render.** A request fired later would be missed.
 - **I-01a relies on a backend rule** (`example.com` is rejected). If nesto removes it, that test fails and should be revised.
-- **Failure artifacts contain typed values.** Playwright writes the form's values, including the random throwaway password, into `error-context.md` and the HTML report when a test fails. Signup tokens never appear. See [D16](docs/04-decisions.md); do not run this against an environment with real data.
+- **Local reports and screenshots are not publishable.** They stay on the machine (git-ignored). Failure screenshots show the generated email; passwords are masked. CI uploads only an allowlisted summary, never a raw report ([D24](docs/04-decisions.md)). The reports that CI uploaded on 2026-11-17 (workflow runs 1 to 6) contained the generated passwords of throwaway QA accounts; see [docs/07-security-remediation.md](docs/07-security-remediation.md).
+- **The email and passwords are not typed with real key events.** They are set through `evaluate` so Playwright does not record them ([D22](docs/04-decisions.md)); the check that the value was kept remains, but key events and actionability checks for those three fields are skipped.
 - **Public inbox domain.** Mailinator addresses are readable by anyone; tests use only fake data. Override with `EMAIL_DOMAIN` if nesto prefers another domain.
 - Current wording is pinned where a message is needed (for example "letters" in the password messages, which is [BUG-3](docs/05-bug-reports.md)); the FR password hint is matched by pattern so the typo is not enshrined.
 
