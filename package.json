@@ -13,7 +13,8 @@
     "format:check": "prettier --check src tests playwright.config.ts eslint.config.mjs tsconfig.json",
     "report": "playwright show-report",
     "test:chrome": "playwright test --project=en --project=fr",
-    "test:mobile": "playwright test --project=\"*-android\" --project=\"*-iphone\""
+    "test:mobile": "playwright test --project=\"*-android\" --project=\"*-iphone\"",
+    "test:security": "node security/verify.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
