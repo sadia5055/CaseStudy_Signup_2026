@@ -91,6 +91,10 @@ Language is a Playwright project (`en`, `fr`), so there is one set of specs and 
 
 Server-side validation checks through direct API calls once the endpoint is confirmed callable; mobile viewport and Firefox/WebKit projects; axe accessibility checks; non-Canadian phone countries; email case and whitespace normalisation; concurrent and double-click submits; the post-signup session and quote page; email/CRM side effects with a test inbox; a contract generated from nesto's OpenAPI document; and a nightly run once nesto confirms automated signups from CI are fine.
 
+## How it was made
+
+Built with Claude Code as an assistant: it drove the browser to explore the app, drafted the code and documents, and ran the tests. The decisions, the checks of each claim against the live page, and the review are recorded in the process documents below.
+
 ## Process documents
 
 | Document | Content |
