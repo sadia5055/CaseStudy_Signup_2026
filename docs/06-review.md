@@ -40,7 +40,7 @@ Lesson recorded: the local runs all passed because my machine matched the assump
 ## Checked and holding
 
 - **Assertions can fail.** Changing the expected `preferredLanguage` made P-01 fail with `- "fr" / + "en"`; reverted.
-- **Independence.** Every test builds its own user (unique email from run id, worker index and random bytes) and nothing is shared; the suite passed 52/52 three times in parallel.
+- **Independence.** Every test builds its own user (unique email from run id, worker index and random bytes) and nothing is shared; the full matrix (300 tests × 10 projects, run twice, in parallel) passed 600/600 locally. (Earlier, desktop Chrome alone passed 52/52 on four consecutive parallel runs.)
 - **No sleeps.** No `waitForTimeout`; waits are for a response, a locator state, or a retried assertion.
 - **Language parity is enforced by the compiler**: `en.ts` and `fr.ts` both implement `Copy`.
 - **No secrets in the repository.** Passwords are generated per test; `.env` is ignored; probe scripts redact `pass`/`token` keys.
