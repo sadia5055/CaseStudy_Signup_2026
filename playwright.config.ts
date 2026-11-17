@@ -30,8 +30,11 @@ export default defineConfig<TestOptions>({
   forbidOnly: isCI,
   // 0 locally so flakiness is visible; 1 in CI so a network blip is reported as "flaky", not hidden.
   retries: isCI ? 1 : 0,
-  // QA is a shared environment: keep the number of simultaneous signups modest.
-  workers: isCI ? 2 : 4,
+  // Two workers, locally and in CI. Measured on an 8-logical-CPU laptop (docs/08-firefox-reliability.md): at 4 workers
+  // CPU averaged 93% and Firefox tests ran about 3x slower than with 1 worker, which produced timeouts when the
+  // machine was also busy; 2 workers had the best wall time for Firefox. QA is also a shared environment.
+  // Override with --workers when a machine has more headroom.
+  workers: 2,
   // Sign-up ends with a cross-origin Auth0 redirect that is slow on CI runners (P-01 waits up to 30 s).
   timeout: 60_000,
   // toPass() (used to fill fields that may be reset) has no timeout by default; bound it.
