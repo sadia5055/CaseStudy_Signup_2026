@@ -48,7 +48,7 @@ Lesson recorded: the local runs all passed because my machine matched the assump
 | 20 | `toHaveURL` in P-01 prints the full URL on failure, which after signup can carry OAuth `code` and `state` into public logs. | My own skeptical review of the remediation, after the security test was green. | `expectToLandOn` prints the path only; scenario C6 and mutation M5 guard it. |
 | 21 | Three `en-firefox` timeouts in a loaded 4-worker run. | Failed local run, then timing, worker-count and old/new-code experiments. | CPU contention, not QA or test logic; workers capped at 2 ([D25](04-decisions.md), [08](08-firefox-reliability.md)). |
 
-Final full run on the remediated code: 300/300 executions passed, 0 failed, 0 flaky, 0 retried, in 7.0 min 52.0 s (2 workers, CPU average 63%, slowest execution 17.4 s against the 60 s limit; Firefox median 3.0 s, p90 5.9 s).
+Final full run on the remediated code: 300/300 executions passed, 0 failed, 0 flaky, 0 retried, in 8 min 23 s (2 workers, CPU average 59%, slowest execution 11.1 s against the 60 s limit; Firefox median 3.1 s, p90 6.3 s).
 
 ## Checked and holding
 
@@ -94,7 +94,7 @@ I reviewed this as a Staff SDET at nesto would, looking for what could still hur
 **Residual weaknesses (accepted, documented)**
 
 - `PLAYWRIGHT_NO_COPY_PROMPT` is not a documented option and may change; the security test pins its effect and fails after a Playwright upgrade that breaks it.
-- The three secret fields are set through `evaluate`: no key events and no actionability checks. The suite no longer proves that real typing into those fields works.
+- The three secret fields are entered with a real click and Tab around a script that fires `beforeinput`, `input` and `change`, not typed key by key. On the real form this matched real typing for errors and payload in 11 cases on three engines, and the app has no key, blur or change validation, but the suite does not prove that per-keystroke behaviour on those fields works.
 - The canary test uses a fake page. It proves the helpers and fixtures do not leak, not that a future new assertion cannot; the summary-only upload and the gate are the backstop.
 - Screenshots (local only) show the generated email and cannot be text-scanned.
 - `captureCreation` reads the response body after the response event; an instant redirect would lose it (reproduced on the fake server). The real app's Auth0 round trip makes this safe in practice.

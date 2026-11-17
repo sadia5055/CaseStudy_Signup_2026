@@ -86,9 +86,53 @@ Mutation checks, each of which turned the test red: reverting to a plain `fill`;
 
 A real run (Chrome and the Safari engine, English and French, 60 tests, 6 real accounts) produced an HTML report with no generated password and no email.
 
+## Input fidelity: does `evaluate` behave like a real user?
+
+The signup assessment tests validation, so entering the email and passwords through `evaluate` must not bypass anything the tests are meant to verify. Checked on the **real QA form** in Chromium, Firefox and WebKit, with the signup request aborted so no account was created (synthetic values; only booleans and counts recorded). Four input methods were compared against real keystroke typing (`pressSequentially`): `fill`, the first version of this fix (focus, native setter, one `input` event), and the version now in the code (real click, `beforeinput`/`input`/`change`, real Tab).
+
+**Events on the email field** (identical on all three engines):
+
+| Method | What fires |
+|---|---|
+| Real typing | pointer, focus, click, then per character `keydown`, `keypress`, `beforeinput`, `input`, `keyup` (31 each), then `change`, `blur` |
+| `fill` | focus, one `beforeinput`, one `input`, `change`, `blur` |
+| First version of the fix | focus and **one synthetic `input`** only: no click, no `change`, no `blur`, no key events |
+| Version in the code | real pointer, focus, click and Tab (trusted focus and blur); synthetic `beforeinput`, `input`, `change` |
+
+**Behaviour**, 11 cases (valid, empty, three malformed emails, four password rules, two confirmation cases) on each engine:
+
+- the validation errors were identical to real typing for every method and every case;
+- the request payload carried the intended email and password for every method (React state updates correctly);
+- the app does not validate on blur or change at all (no error appeared before submit with real typing), so skipping those events changed nothing observable.
+
+**What is still not reproduced.** The per-keystroke events (`keydown`, `keypress`, `keyup`) and the browser's own trusted `input` events. They cannot be produced without passing the value to a Playwright call that renders it into the report. The application showed no dependence on them (no per-key handlers, no blur or change validation), but if it ever adds key-driven behaviour to these three fields the suite would not exercise it. The names, phone and other fields are still typed with `fill`.
+
+## Is there a supported way to keep typed values out of the failure snapshot?
+
+Measured with canary values, four configurations of the same failing scenarios:
+
+| Configuration | Page snapshot in `error-context.md` | Canary in the report's error context |
+|---|---|---|
+| Neither | present | leaks |
+| HTML reporter option `noCopyPrompt` (typed in `test.d.ts`, added in Playwright 1.56) | present | **leaks (identical to "neither")** |
+| `PLAYWRIGHT_NO_COPY_PROMPT=1` | absent | clean |
+| Both | absent | clean |
+
+The supported option only hides the report's "Copy prompt" feature; it does not stop the runner from capturing the snapshot. The variable that does is a runner-side variable that is not in Playwright's documentation (a web search found no official page for it; it is visible only in the source). Taking the snapshot happens right after the test function fails and before any `afterEach` hook or fixture teardown, so a hook cannot clear the fields first. No supported mechanism was found.
+
+So the variable is **one layer of five, not the only protection**:
+
+1. raw reports, `test-results` and screenshots are never uploaded from CI (the main protection: nothing is published);
+2. the published summary is built from an allowlist and checked by the upload gate;
+3. the source never passes secrets to value-rendering calls and never prints values in assertions;
+4. the attached exchange is an allowlist;
+5. `PLAYWRIGHT_NO_COPY_PROMPT=1`, which protects local reports and `test-results`.
+
+If a Playwright upgrade stops honouring the variable, the security test fails (verified by removing it: the canary then appears in `error-context.md` and the report). The version it was verified against is the locked one, 1.65.1; `package.json` allows `^1.65.1`, so `npm update` could move it, and the lockfile and `npm ci` are what hold it in CI.
+
 ## Latest results
 
-Final code, full matrix on a Windows laptop (started 2026-11-17 21:51 UTC): **300/300 executions passed, 0 failed, 0 flaky, 0 retried, in 7.0 min 52.0 s (2 workers, CPU average 63%, slowest execution 17.4 s against the 60 s limit; Firefox median 3.0 s, p90 5.9 s)**.
+Final code, full matrix on a Windows laptop (started 2026-11-17 22:28 UTC): **300/300 executions passed, 0 failed, 0 flaky, 0 retried, in 8 min 23 s (2 workers, CPU average 59%, slowest execution 11.1 s against the 60 s limit; Firefox median 3.1 s, p90 6.3 s)**.
 
 Security: `npm run test:security` passes (six scenarios, scanner self-test, leaky control, five mutations detected). The raw JSON report of a real 300-execution run, with 30 real accounts, held no password, email or token; the only credential-shape finding was the local absolute path of that machine, which is why raw reports are not uploaded. The summary built from it passes the upload gate.
 
@@ -98,6 +142,6 @@ Not yet verified: the remediated workflow (security job, summary, upload gate, f
 
 - `PLAYWRIGHT_NO_COPY_PROMPT` is not a documented option. `npm run test:security` pins its effect, so a Playwright upgrade that changes it fails the test. Other Playwright versions may also change what titles render.
 - Screenshots (failure only, local only) show the generated email. They are not uploaded and cannot be text-scanned.
-- Setting values with `evaluate` skips Playwright's actionability checks for those three fields. The fill-and-verify loop still asserts the value stayed.
+- The email and the two password fields are not typed key by key (see *Input fidelity*): no per-keystroke events and no trusted `input` events. The fill-and-verify loop still asserts the value stayed, and a real click and Tab frame it.
 - `captureCreation` reads the response body after the response event. If the page navigated away immediately the body would be gone; the real app's Auth0 round trip is slow enough that this has not happened. The fake server reproduced it with an instant redirect.
 - The artifacts already published stay downloadable until deleted by the owner.
