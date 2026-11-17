@@ -2,6 +2,8 @@
 
 Automated tests for `https://app.qa.nesto.ca/signup` in English and French, on desktop Chrome, Firefox, Safari (WebKit), an Android phone and an iPhone: form fields and labels, client-side validation, mobile layout, and the account-creation API (`POST /api/accounts` must return 201 with the entered data). Written for the Senior QA Automation Developer – Integrations exercise.
 
+**Technical walkthrough:** [presentation PDF, 14 slides](presentation/nesto-signup-test-automation.pdf). It covers the approach, the integration check, what went wrong and the evidence.
+
 The submission includes the working notes, not only the code: see [Process documents](#process-documents).
 
 ## Run it
