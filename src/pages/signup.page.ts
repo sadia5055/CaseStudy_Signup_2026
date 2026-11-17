@@ -1,4 +1,5 @@
 import { expect, type Locator, type Page } from '@playwright/test';
+import { GEOLOCATION_PATH } from '../api/geolocation';
 import type { SignupUser } from '../data/user';
 import type { Copy } from '../i18n';
 
@@ -84,9 +85,7 @@ export class SignupPage {
     // The form is still re-initialised after hydration, once the geolocation lookup answers. Values
     // typed before that are wiped, which looks like a validation bug but is a timing issue
     // (docs/04-decisions.md, D11). Listen before navigating so the response cannot be missed.
-    const geolocation = this.page.waitForResponse(
-      (res) => new URL(res.url()).pathname === '/api/geolocation/all',
-    );
+    const geolocation = this.page.waitForResponse((res) => new URL(res.url()).pathname === GEOLOCATION_PATH);
     await this.page.goto(this.copy.path);
     await geolocation;
     await this.waitUntilInteractive();
@@ -96,7 +95,12 @@ export class SignupPage {
   private async waitUntilInteractive(): Promise<void> {
     await this.page.waitForFunction(() => {
       const root = document.getElementById('__next');
-      return root !== null && Object.keys(root).some((key) => key.startsWith('__reactContainer'));
+      if (root === null || !Object.keys(root).some((key) => key.startsWith('__reactContainer'))) return false;
+      // Hydration is not finished while the inputs still share one generated id ("field-1" on all
+      // of them). That state is visible when the geolocation answer arrives before React is done,
+      // as it does with a stubbed response (35% of WebKit loads); real latency hides it.
+      const ids = [...document.querySelectorAll('form input')].map((input) => input.id).filter(Boolean);
+      return ids.length > 0 && new Set(ids).size === ids.length;
     });
   }
 

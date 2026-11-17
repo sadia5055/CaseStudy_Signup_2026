@@ -13,6 +13,7 @@ src/fixtures/index.ts        extended test: lang, copy, signupPage, newUser
         │ composes
 src/pages/signup.page.ts     UI driver: locators + user actions. Knows the DOM, not the API.
 src/api/                     Integration layer: knows the HTTP contract, not the DOM.
+  geolocation.ts               pins the visitor's location (the page's one other network dependency)
   accounts.ts                  endpoint matcher, `captureCreation(page, action)` → { request, response }
   account.schema.ts            zod contract for the 201 body (subset + "no secrets" rules)
   expected.ts                  form values → expected request/response values (E.164 phone, region code)
@@ -22,7 +23,7 @@ src/config/env.ts            BASE_URL, EMAIL_DOMAIN with defaults, validated onc
 playwright.config.ts         projects = language × device (en, en-firefox, en-webkit, en-android, en-iphone, and the same for fr)
 ```
 
-Dependencies point down only. Specs never touch raw selectors; the page object never inspects network traffic; the API layer never touches the DOM. That is the whole rule, and it is what keeps a failure attributable: a locator problem fails in `pages/`, a contract problem fails in `api/`.
+Dependencies point down only. One deliberate exception: the page object imports the geolocation path constant, because its "page is ready" signal is that response (D11). Specs never touch raw selectors; the page object never inspects network traffic; the API layer never touches the DOM. That is the whole rule, and it is what keeps a failure attributable: a locator problem fails in `pages/`, a contract problem fails in `api/`.
 
 ## How a signup test is wired
 

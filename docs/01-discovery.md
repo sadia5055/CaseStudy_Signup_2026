@@ -27,7 +27,7 @@ Test ids use the `data-testid` attribute (Playwright default). Field ids (`field
 | Last name | text | `lastName` | `last-name-input` | Last name / Nom | |
 | Phone country | select | `phoneCountry` | — | `aria-label` "Phone number country" | default Canada; includes "International" |
 | Phone | tel | `phone` | `phoneInput` | Phone number / Téléphone | input reformats while typing |
-| Province | select | — | `region-select` | Province of purchase / Province de l'achat | default Ontario, 13 options + placeholder |
+| Province | select | — | `region-select` | Province of purchase / Province de l'achat | preselected from the visitor's location (see *Visitor location*); 13 options + placeholder |
 | Email | text (not `type=email`) | `email` | `email-input` | Email / Courriel | |
 | Password | password | `password` | `password-input` | Password / Mot de passe | hint below the field, `autocomplete=off` |
 | Confirm password | password | `passwordConfirmation` | `passwordConfirmation-input` | Confirm password / Confirmation du mot de passe | |
@@ -90,6 +90,13 @@ Only one application endpoint is involved in signup.
 
 Server-generated: `account.id`, `account.rid`, `account.created`, `account.updated`, `account.role` (`borrower`), `account.tenant`, and `token.*` (access token, refresh token, expiry — secrets, never stored).
 The request also carries tracking fields (`anonymousAccountId`, `gaClientId`, `utm*`, `marketingChannel`, `formName`). They vary per session and are not asserted.
+
+## Visitor location (found when CI failed)
+
+- Every load of the signup page calls `GET /api/geolocation/all`. The response has one entry per lookup provider (`ipapi.co`, `ipinfo.io`), each with `region_code`, `country_code`, city and coordinates of the **visitor's IP address**. The values are not recorded in this repository.
+- The form pre-selects the province from that answer, and the form is re-initialised once the answer arrives (D11).
+- From a machine in Ontario the province starts as Ontario. On GitHub-hosted runners (US) the same select starts **empty**. I first wrote "default Ontario" in this document and in test F-02 because that is what my own machine showed; the first CI run proved it was location-dependent, not a fixed default.
+- The endpoint's latency varies: in one CI run it did not answer within 45 s. It depends on third-party IP-lookup services, so any test that waits for it inherits that risk.
 
 ## Responsive behaviour (Pixel 7 412 px, iPhone 14 390 px)
 

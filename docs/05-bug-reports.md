@@ -60,4 +60,5 @@ The automated tests pin current messages where a message is needed for a check (
 | C-5 | The FR page logo links to `/`, same as EN; the FR "Connectez-vous" link goes to `/fr`. | Does `/` redirect French visitors to `/fr`? Not checked. |
 | C-6 | An empty phone number shows "Invalid value" rather than "required". | Intended wording? |
 | C-8 | On phones the language picker button has `aria-label="Menu"`, so assistive technology announces "Menu" instead of the visible "Language / English"; voice-control users cannot say what they see. | Intended name? (WCAG 2.5.3, label in name.) |
+| C-9 | The province is pre-selected from the visitor's IP location. Outside Canada (for example a US runner) the select starts empty. | Intended? Is the province required to submit, and does an empty province block signup? Not tested. |
 | C-7 | Email domain `example.com` is rejected with `422 placeholder email detected`. | Expected behaviour; recorded because it forced the choice of a throwaway domain (D6). Is `mailinator.com` acceptable to nesto? |

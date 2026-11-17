@@ -15,3 +15,4 @@ Each assumption names what it affects. Items marked **ask** are questions for ne
 | A9 | The suite stops at the 201 response and the redirect to the quote page. Email, CRM and Auth0 behaviour are out of scope. | Scope of the brief | `02-test-strategy.md` |
 | A10 | Client-side validation is what is under test. Server-side validation could not be checked without bypassing the UI. | Discovery, open question 6 | Future coverage |
 | A11 | On phones the language switch is the hamburger menu's language picker; the header link exists only on wide screens. | Observed on Pixel 7 and iPhone 14 emulation | D17, F-04 |
+| A12 | The visitor is in Canada (Ontario) for all tests except F-05. The pre-selected province follows the visitor's IP, so the location is stubbed. A visitor outside Canada gets an empty province; whether that is intended, and whether the province is required to submit, was not checked — **ask** | CI run 1 vs local run | D19, F-02, F-05 |

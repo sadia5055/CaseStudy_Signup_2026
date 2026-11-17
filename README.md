@@ -42,14 +42,14 @@ Projects are language × device: `en`, `en-firefox`, `en-webkit`, `en-android`, 
 
 | Area | Tests | Notes |
 |---|---|---|
-| Fields and labels | F-01 … F-04 | labels, control types, defaults (consent unchecked), password hint, language switch (header link on wide screens, hamburger-menu picker on phones) |
+| Fields and labels | F-01 … F-05 | labels, control types, defaults (consent unchecked), password hint, language switch (header link on wide screens, hamburger-menu picker on phones) |
 | Mobile layout | L-01 … L-03 | no horizontal scroll, every control within the viewport width, longest French error does not widen the page |
 | Validation (negative) | N-01 … N-06, 16 cases | one data table; each case asserts the localized message, that nothing else is flagged, and that **no creation request is sent** |
 | Account creation (positive) | P-01, P-02 | real UI-triggered request; **201**, then form → request → response → contract |
 | Duplicate email | I-02 | second signup is refused and the error is shown |
 | Backend failures | I-01a/b/c | real 422 for a placeholder email; simulated 500 and network failure; user stays on the form |
 
-29 tests per project, 290 per full run. The matrix with business risks is in [`docs/02-test-strategy.md`](docs/02-test-strategy.md).
+30 tests per project, 300 per full run. The matrix with business risks is in [`docs/02-test-strategy.md`](docs/02-test-strategy.md).
 
 ### The integration check
 
@@ -76,16 +76,16 @@ Language is a Playwright project (`en`, `fr`), so there is one set of specs and 
 
 ## Results so far
 
-- Local, Windows, all 10 projects (2 languages × desktop Chrome, Firefox, WebKit, Pixel 7, iPhone 14): **290/290 passed on two consecutive full runs** (parallel, 4 workers, about 8 minutes each). Before devices were added, desktop Chrome passed 52/52 on four consecutive runs and a fresh `git clone` + `npm ci` passed typecheck, lint and format checks. Fixes made along the way are in [`docs/06-review.md`](docs/06-review.md).
+- Local, Windows, all 10 projects (2 languages × desktop Chrome, Firefox, WebKit, Pixel 7, iPhone 14), after the fixes for the first CI run: **600/600 passed** (the full suite of 300 tests run twice, parallel, 13 minutes). The run just before the last fix had 299/300; the one failure (`fr-webkit` L-02) was traced to my own readiness check and fixed ([D21](docs/04-decisions.md)), then passed 80/80 when repeated. Earlier, before devices and the CI fixes, desktop Chrome passed 52/52 on four consecutive runs and a fresh `git clone` + `npm ci` passed typecheck, lint and format checks. All findings along the way are in [`docs/06-review.md`](docs/06-review.md).
 - The first phone run found one real gap: the language switch is a hamburger-menu picker on phones, so F-04 failed on all four phone projects until the page object handled it ([D17](docs/04-decisions.md)). No layout defects were found on phones.
 - Mutation check: changing one expected value (`preferredLanguage`) fails P-01 with a field-level diff.
-- **GitHub Actions workflow is written but has not run.** Whether GitHub-hosted runners can reach QA is unknown until it is pushed.
+- **GitHub Actions: the first run failed, the fixes have not been run there yet.** Causes (all fixed locally, details in [`docs/06-review.md`](docs/06-review.md)): the province default depends on the visitor's IP, so a US runner saw an empty select (F-02 was wrong; the location is now stubbed, F-05 covers the non-Canadian case); a geolocation wait timed out once; and the Auth0 redirect after signup is slower on CI than 10 s.
 
 ## Known limitations
 
 - **Client-side rules only.** Server-side validation is not tested because that would mean bypassing the form; the endpoint was not probed directly.
 - **Phones are emulated, not real.** Pixel 7 and iPhone 14 are Playwright device profiles (viewport, user agent, touch; the iPhone runs the real WebKit engine). Mobile keyboards, autofill, native pickers and real iOS Safari behaviour are not covered. Firefox is desktop only, and the hamburger breakpoint width was not measured.
-- **Dependency on `GET /api/geolocation/all`.** The form resets after that call returns, so the page object waits for it ([D11](docs/04-decisions.md)). If the app stops calling it, every test times out in `goto()`.
+- **Geolocation is stubbed.** The form resets after `GET /api/geolocation/all` returns and pre-selects the province from the visitor's IP, which varies by machine and depends on third-party lookups, so the tests pin an Ontario location ([D19](docs/04-decisions.md)). The real lookup is not exercised. If the app stops calling that endpoint, `goto()` times out.
 - **"No request sent" is checked right after the errors render.** A request fired later would be missed.
 - **I-01a relies on a backend rule** (`example.com` is rejected). If nesto removes it, that test fails and should be revised.
 - **Failure artifacts contain typed values.** Playwright writes the form's values, including the random throwaway password, into `error-context.md` and the HTML report when a test fails. Signup tokens never appear. See [D16](docs/04-decisions.md); do not run this against an environment with real data.
@@ -111,4 +111,4 @@ Built with Claude Code as an assistant: it drove the browser to explore the app,
 | [`docs/05-bug-reports.md`](docs/05-bug-reports.md) | confirmed defects and items needing clarification |
 | [`docs/06-review.md`](docs/06-review.md) | self-review: what was found wrong, fixed, accepted |
 | [`ASSUMPTIONS.md`](ASSUMPTIONS.md) | numbered assumptions with the question for nesto where there is one |
-| [`scripts/`](scripts) | the two probe scripts used during discovery (not part of the suite) |
+| [`scripts/`](scripts) | the probe scripts used during discovery and debugging (not part of the suite) |

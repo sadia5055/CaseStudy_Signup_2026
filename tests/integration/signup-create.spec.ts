@@ -6,6 +6,8 @@ import { env } from '../../src/config/env';
 import { expect, test } from '../../src/fixtures';
 import { SignupPage } from '../../src/pages/signup.page';
 
+const AUTH_REDIRECT_TIMEOUT_MS = 30_000;
+
 // These tests create real accounts in the QA environment (allowed by the assessment). Each uses its
 // own unique address, so they are independent and safe to run in parallel.
 test.describe('signup: account creation', () => {
@@ -30,7 +32,9 @@ test.describe('signup: account creation', () => {
     // The password must not come back, under any key.
     expect(passwordKeyPaths(exchange.body)).toEqual([]);
 
-    await expect(page).toHaveURL(new RegExp(`${copy.redirectPath}$`));
+    // After the 201 the app signs the user in through Auth0 (a cross-origin round trip to
+    // auth.qa.nesto.ca) before landing on the quote page. That hop took over 10 s on CI runners.
+    await expect(page).toHaveURL(new RegExp(`${copy.redirectPath}$`), { timeout: AUTH_REDIRECT_TIMEOUT_MS });
   });
 
   test('P-02 keeps accents, normalises the phone, and records declined consent', async ({

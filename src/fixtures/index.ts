@@ -1,4 +1,5 @@
 import { test as base, expect } from '@playwright/test';
+import { stubGeolocation } from '../api/geolocation';
 import { buildUser, type SignupUser } from '../data/user';
 import { copies, type Copy, type Lang } from '../i18n';
 import { SignupPage } from '../pages/signup.page';
@@ -22,6 +23,8 @@ export const test = base.extend<TestOptions & Fixtures>({
     await use(copies[lang]);
   },
   signupPage: async ({ page, copy }, use) => {
+    // Pin the visitor's location (Ontario) so the page starts the same way on every machine.
+    await stubGeolocation(page);
     const signupPage = new SignupPage(page, copy);
     await signupPage.goto();
     await use(signupPage);

@@ -1,4 +1,6 @@
+import { stubGeolocation, VIRGINIA_US } from '../../src/api/geolocation';
 import { copies, otherLang } from '../../src/i18n';
+import { SignupPage } from '../../src/pages/signup.page';
 import { expect, test } from '../../src/fixtures';
 
 test.describe('signup form: fields and labels', () => {
@@ -22,10 +24,21 @@ test.describe('signup form: fields and labels', () => {
     await expect(p.submit).toBeEnabled();
   });
 
-  test('F-02 starts with Canada, Ontario and consent unchecked', async ({ signupPage: p }) => {
+  test('F-02 preselects the visitor’s province and leaves consent unchecked', async ({ signupPage: p }) => {
+    // The fixture places the visitor in Ontario; the province default follows the location.
     await expect(p.phoneCountry).toHaveValue('CA');
     await expect(p.province).toHaveValue('ON');
     // A pre-checked marketing consent would be a compliance defect, so the default is asserted.
+    await expect(p.consent).not.toBeChecked();
+  });
+
+  test('F-05 leaves the province unselected for a visitor outside Canada', async ({ page, copy }) => {
+    // Seen in CI: a US runner got an empty province instead of Ontario.
+    await stubGeolocation(page, VIRGINIA_US);
+    const p = new SignupPage(page, copy);
+    await p.goto();
+
+    await expect(p.province).toHaveValue('');
     await expect(p.consent).not.toBeChecked();
   });
 

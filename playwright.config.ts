@@ -27,7 +27,8 @@ export default defineConfig<TestOptions>({
   retries: isCI ? 1 : 0,
   // QA is a shared environment: keep the number of simultaneous signups modest.
   workers: isCI ? 2 : 4,
-  timeout: 45_000,
+  // Sign-up ends with a cross-origin Auth0 redirect that is slow on CI runners (P-01 waits up to 30 s).
+  timeout: 60_000,
   // toPass() (used to fill fields that may be reset) has no timeout by default; bound it.
   expect: { timeout: 10_000, toPass: { timeout: 10_000 } },
   reporter: isCI
