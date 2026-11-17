@@ -9,12 +9,18 @@ const digitsOnly = (value: string) => value.replace(/\D/g, '');
  * Sets an input's value from inside the page. Playwright renders the argument of `fill`, `type` and the
  * keyboard methods into report step titles (`Fill "<value>"`), whereas `evaluate` shows only "Evaluate".
  * Used for the account email and passwords, so they never reach a report (docs/07-security-remediation.md).
+ * It fires the events a browser fires for typed text (beforeinput, input, change); the caller adds a real click
+ * before and a real Tab after, so focus, blur and the browser's own change handling also happen.
  */
 function setInputValue(element: HTMLElement, value: string): void {
   const input = element as HTMLInputElement;
   input.focus();
+  input.dispatchEvent(
+    new InputEvent('beforeinput', { bubbles: true, cancelable: true, inputType: 'insertText', data: value }),
+  );
   Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, value);
-  input.dispatchEvent(new Event('input', { bubbles: true }));
+  input.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText', data: value }));
+  input.dispatchEvent(new Event('change', { bubbles: true }));
 }
 
 /** UI driver for the signup page. Knows the DOM; knows nothing about the API. */
@@ -152,7 +158,11 @@ export class SignupPage {
   /** Enters a sensitive value (the generated email or a password) without recording it in the report. */
   private async fillSecret(label: string, field: Locator, value: string) {
     await test.step(`Enter ${label} (value not recorded)`, async () => {
-      await this.enterUntilKept(label, field, value, () => field.evaluate(setInputValue, value));
+      await this.enterUntilKept(label, field, value, async () => {
+        await field.click(); // real pointer and focus events
+        await field.evaluate(setInputValue, value);
+        await field.press('Tab'); // real blur, as a user moving on
+      });
     });
   }
 
