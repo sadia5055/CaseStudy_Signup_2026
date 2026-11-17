@@ -13,7 +13,8 @@ export default defineConfig<TestOptions>({
   // QA is a shared environment: keep the number of simultaneous signups modest.
   workers: isCI ? 2 : 4,
   timeout: 45_000,
-  expect: { timeout: 10_000 },
+  // toPass() (used to fill fields that may be reset) has no timeout by default; bound it.
+  expect: { timeout: 10_000, toPass: { timeout: 10_000 } },
   reporter: isCI
     ? [['list'], ['github'], ['html', { open: 'never' }]]
     : [['list'], ['html', { open: 'never' }]],

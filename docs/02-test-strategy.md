@@ -27,7 +27,7 @@ Every test runs in both languages through Playwright projects (`en`, `fr`). "EN/
 
 | ID | Scenario | Business risk | Pri | Level | +/− | Expected result | Approach |
 |---|---|---|---|---|---|---|---|
-| I-01 | Backend rejects (500, 422 `placeholder email`, request aborted) | User sees success or a blank page when signup failed | P1 | integration | − | Generic localized error shown; URL stays on signup; no redirect | `page.route` fulfils/aborts **only** the failure; the success path is never mocked |
+| I-01 | Backend rejects (a: real 422 `placeholder email`; b: simulated 500; c: simulated network failure) | User sees success or a blank page when signup failed | P1 | integration | − | Generic localized error shown; URL stays on signup; no redirect | `page.route` fulfils/aborts **only** the failure; the success path is never mocked |
 | I-02 | Duplicate email | Silent overwrite or confusing failure | P1 | integration | − | Second signup with the same email gets a non-201 response and the generic error; documents current behaviour (`400`), see open question 1 | create once through UI, repeat once |
 | I-03 | Request payload reflects the form | Data lost between form and request | P1 | integration | + | Payload `phone` is E.164, `language` matches URL, `region` is a province code | asserted in P-01/P-02 on the captured request |
 
@@ -41,7 +41,7 @@ Every test runs in both languages through Playwright projects (`en`, `fr`). "EN/
 
 ## Size and cost
 
-13 specs ×2 languages. Account-creating tests: P-01, P-02, I-02 → **3 accounts per language, 6 per full run**. Validation tests never submit a request, so they can be repeated freely. The QA environment is shared and has no known cleanup, which is why account-creating tests are kept few and everything else stops at client-side validation.
+26 tests per language, 52 per full run: 4 field/label tests (F-01…F-04), 16 data-driven validation cases (N-01…N-06 expand to 16), 3 account-creation tests (P-01, P-02, I-02) and 3 backend-failure tests (I-01a/b/c). Account-creating tests: P-01, P-02, I-02 → **3 accounts per language, 6 per full run** (I-01a is rejected by the backend, I-01b/c never reach it). Validation tests never submit a request, so they can be repeated freely. The QA environment is shared and has no known cleanup, which is why account-creating tests are kept few and everything else stops at client-side validation.
 
 ## What the suite will not claim
 
