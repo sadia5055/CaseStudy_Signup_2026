@@ -3,7 +3,7 @@ import { z } from 'zod';
 /**
  * Contract for the 201 body of POST /api/accounts: only what the tests rely on.
  * `loose()` keeps the ~60 other account fields (tracking, `*Specified` flags) from failing the check;
- * see decision D5. The "no password echoed" rule is asserted separately (redact.ts).
+ * see decision D5. The "no password echoed" rule is asserted separately (secrets.ts).
  */
 export const CreationResponse = z.object({
   account: z
