@@ -31,7 +31,7 @@ The first GitHub Actions run (commit `e900887`) failed on all five jobs. Three c
 |---|---|---|---|
 | 12 | F-02 asserted "province = Ontario", which was true only on my machine. The page pre-selects the province from the visitor's IP; a US runner gets an empty select. 10 of 10 projects failed. | CI log: expected `"ON"`, received `""`. The geolocation endpoint's response shape confirmed the cause; a Virginia stub reproduces the empty province in all 10 projects (F-05). | Location is pinned by a stub ([D19](04-decisions.md)); F-02 and F-05 cover both cases. The wrong assumption is also corrected in the discovery notes. |
 | 13 | The readiness wait from D11 (wait for `/api/geolocation/all`) timed out after 45 s on one CI test (`en-android`, N-04). This was the weakness listed as "accepted B" in the first review; it happened. | CI log: `page.waitForResponse: Test timeout of 45000ms exceeded` inside `goto()`. | The stub makes the wait immediate and removes the third-party dependency ([D19](04-decisions.md)). |
-| 14 | P-01's redirect check (10 s) failed on chrome and WebKit and flaked on Firefox: the Auth0 round trip is slower from CI. | CI log: still on `/fr/signup`, "waiting for navigation to auth.qa.nesto.ca/authorize to finish". | 30 s for that check, 60 s per test ([D20](04-decisions.md)). **Not yet confirmed on CI.** |
+| 14 | P-01's redirect check (10 s) failed on chrome and WebKit and flaked on Firefox: the Auth0 round trip is slower from CI. | CI log: still on `/fr/signup`, "waiting for navigation to auth.qa.nesto.ca/authorize to finish". | 30 s for that check, 60 s per test ([D20](04-decisions.md)). Confirmed on the next CI run (one run). |
 
 | 15 | After the stub (finding 12/13), one run in 300 failed: `fr-webkit` L-02 saw six inputs with the same id. It reproduced 3 times in 30. | Repeated the single test, then probed the page directly: at the moment of "ready", 15 of 40 stubbed WebKit loads had duplicate ids; 0 of 40 with the real response or on other engines. | Own flaw: the instant stub outran hydration. Readiness now requires unique input ids ([D21](04-decisions.md)); 80 of 80 afterwards. |
 
@@ -54,7 +54,7 @@ Lesson recorded: the local runs all passed because my machine matched the assump
 | C | I-02 only asserts "4xx and an error is shown". | The intended duplicate behaviour is an open question to nesto (C-1 in the bug reports); pinning `400` would encode a guess. |
 | D | I-01a depends on a backend rule about placeholder domains. | It tests a real rejection without mocking; it will need revising if the rule changes. |
 | E | Error messages pin the current "letters" wording (BUG-3). | The tests need some expected text; the hint with the typo is matched by pattern instead. |
-| F | CI ran once and failed (findings 12–14). The fixes pass locally but have not been run on GitHub yet. | Needs a push; the README says so. |
+| F | CI has run twice, on GitHub-hosted Ubuntu runners only: the first run failed (findings 12–14), the next passed all six jobs. One green run is not a stability record. | Needs more runs over time, including at different hours. |
 | G | Client-side validation only. | Server-side checks would mean bypassing the form. |
 | H | Phones are Playwright emulations, not real devices; tablets, landscape and the hamburger breakpoint width are not covered. | Real devices need a device cloud; listed as the next step. A full run also creates 30 accounts in QA, so `npm run test:chrome` exists for quick runs. |
 
