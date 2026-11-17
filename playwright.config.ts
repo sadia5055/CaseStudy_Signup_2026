@@ -2,6 +2,11 @@ import { defineConfig, devices } from '@playwright/test';
 import { env } from './src/config/env';
 import type { TestOptions } from './src/fixtures';
 
+// Playwright writes a snapshot of the page, including typed field values, into error-context.md when a test
+// fails. This variable makes it skip the snapshot. It is not a documented option, so `npm run test:security`
+// pins the behaviour and fails if a Playwright upgrade changes it (docs/07-security-remediation.md).
+process.env.PLAYWRIGHT_NO_COPY_PROMPT = '1';
+
 const isCI = Boolean(process.env.CI);
 
 const languages = [

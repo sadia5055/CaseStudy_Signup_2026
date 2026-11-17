@@ -1,5 +1,6 @@
 import type { Route } from '@playwright/test';
 import { ACCOUNTS_PATH, captureCreation } from '../../src/api/accounts';
+import { diagnosticExchange } from '../../src/api/diagnostics';
 import { uniqueEmail } from '../../src/data/user';
 import { expect, test } from '../../src/fixtures';
 
@@ -18,7 +19,7 @@ test.describe('signup: backend failures', () => {
     const exchange = await captureCreation(page, () => p.submit.click());
 
     expect(exchange.status).toBe(422);
-    expect(exchange.body).toMatchObject({ error: 'invalid parameters' });
+    expect(diagnosticExchange(exchange).response.error).toBe('invalid parameters');
     await expect(p.backendError).toBeVisible();
     await expect(page).toHaveURL(new RegExp(`${copy.path}$`));
   });

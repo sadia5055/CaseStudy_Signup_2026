@@ -1,5 +1,5 @@
 import { test, type Page } from '@playwright/test';
-import { redact } from './redact';
+import { diagnosticExchange } from './diagnostics';
 
 /** The account-creation call made by the signup form (see docs/01-discovery.md). */
 export const ACCOUNTS_PATH = '/api/accounts';
@@ -18,7 +18,7 @@ export interface CreationExchange {
 /**
  * Runs `action` (the click that submits the form) and returns the real request/response pair.
  * The response listener is registered before the action starts, so a fast response cannot be missed.
- * A redacted copy of the exchange is attached to the test report as evidence.
+ * An allowlisted summary of the exchange (status, field names, no values) is attached to the test report.
  */
 export async function captureCreation(page: Page, action: () => Promise<void>): Promise<CreationExchange> {
   const [response] = await Promise.all([page.waitForResponse((res) => isCreation(res.request())), action()]);
@@ -35,7 +35,7 @@ export async function captureCreation(page: Page, action: () => Promise<void>): 
     body,
   };
   await test.info().attach('signup-exchange.json', {
-    body: JSON.stringify(redact(exchange), null, 2),
+    body: JSON.stringify(diagnosticExchange(exchange), null, 2),
     contentType: 'application/json',
   });
   return exchange;

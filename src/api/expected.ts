@@ -7,6 +7,17 @@ export function toE164(phone: string): string {
   return digits.length === 11 && digits.startsWith('1') ? `+${digits}` : `+1${digits}`;
 }
 
+/**
+ * Names of the fields whose values differ. Assertions use this instead of `toMatchObject`, whose failure
+ * output prints both objects, which would put the generated email into logs and reports.
+ */
+export function mismatchedFields(
+  actual: Record<string, unknown>,
+  expected: Record<string, unknown>,
+): string[] {
+  return Object.keys(expected).filter((key) => actual[key] !== expected[key]);
+}
+
 /** Hop 1: what the browser must send for this user (subset; tracking fields are ignored). */
 export function expectedRequest(user: SignupUser, lang: Lang) {
   return {

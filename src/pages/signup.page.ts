@@ -1,9 +1,21 @@
-import { expect, type Locator, type Page } from '@playwright/test';
+import { expect, test, type Locator, type Page } from '@playwright/test';
 import { GEOLOCATION_PATH } from '../api/geolocation';
 import type { SignupUser } from '../data/user';
 import type { Copy } from '../i18n';
 
 const digitsOnly = (value: string) => value.replace(/\D/g, '');
+
+/**
+ * Sets an input's value from inside the page. Playwright renders the argument of `fill`, `type` and the
+ * keyboard methods into report step titles (`Fill "<value>"`), whereas `evaluate` shows only "Evaluate".
+ * Used for the account email and passwords, so they never reach a report (docs/07-security-remediation.md).
+ */
+function setInputValue(element: HTMLElement, value: string): void {
+  const input = element as HTMLInputElement;
+  input.focus();
+  Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, value);
+  input.dispatchEvent(new Event('input', { bubbles: true }));
+}
 
 /** UI driver for the signup page. Knows the DOM; knows nothing about the API. */
 export class SignupPage {
@@ -104,22 +116,44 @@ export class SignupPage {
     });
   }
 
-  /** Fills a field and retries until the value is still there, then moves on. No fixed sleeps. */
-  private async fill(field: Locator, value: string, normalise: (v: string) => string = (v) => v) {
+  /**
+   * Retries `enter` until the field still holds `value` (the form can reset after load, see D11).
+   * The comparison is reduced to a boolean first, so a failure message never contains the value.
+   */
+  private async enterUntilKept(
+    label: string,
+    field: Locator,
+    value: string,
+    enter: () => Promise<void>,
+    normalise: (v: string) => string = (v) => v,
+  ) {
     await expect(async () => {
-      await field.fill(value);
-      expect(normalise(await field.inputValue())).toBe(normalise(value));
+      await enter();
+      const kept = normalise(await field.inputValue()) === normalise(value);
+      expect(kept, `${label} did not keep the value that was entered`).toBe(true);
     }).toPass();
   }
 
+  /** Types a non-sensitive value (fixed test data). No fixed sleeps. */
+  private async fill(label: string, field: Locator, value: string, normalise?: (v: string) => string) {
+    await this.enterUntilKept(label, field, value, () => field.fill(value), normalise);
+  }
+
+  /** Enters a sensitive value (the generated email or a password) without recording it in the report. */
+  private async fillSecret(label: string, field: Locator, value: string) {
+    await test.step(`Enter ${label} (value not recorded)`, async () => {
+      await this.enterUntilKept(label, field, value, () => field.evaluate(setInputValue, value));
+    });
+  }
+
   async fillForm(user: SignupUser): Promise<void> {
-    await this.fill(this.firstName, user.firstName);
-    await this.fill(this.lastName, user.lastName);
-    await this.fill(this.phone, user.phone, digitsOnly); // the phone input reformats what is typed
+    await this.fill('first name', this.firstName, user.firstName);
+    await this.fill('last name', this.lastName, user.lastName);
+    await this.fill('phone', this.phone, user.phone, digitsOnly); // the phone input reformats what is typed
     await this.province.selectOption(user.province);
-    await this.fill(this.email, user.email);
-    await this.fill(this.password, user.password);
-    await this.fill(this.passwordConfirmation, user.passwordConfirmation);
+    await this.fillSecret('email', this.email, user.email);
+    await this.fillSecret('password', this.password, user.password);
+    await this.fillSecret('password confirmation', this.passwordConfirmation, user.passwordConfirmation);
     await this.consent.setChecked(user.consent);
   }
 }

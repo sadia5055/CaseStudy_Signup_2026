@@ -1,7 +1,7 @@
 import { captureCreation } from '../../src/api/accounts';
 import { CreationResponse } from '../../src/api/account.schema';
-import { expectedAccount, expectedRequest } from '../../src/api/expected';
-import { passwordKeyPaths } from '../../src/api/redact';
+import { expectedAccount, expectedRequest, mismatchedFields } from '../../src/api/expected';
+import { passwordKeyPaths } from '../../src/api/secrets';
 import { env } from '../../src/config/env';
 import { expect, test } from '../../src/fixtures';
 import { SignupPage } from '../../src/pages/signup.page';
@@ -25,10 +25,16 @@ test.describe('signup: account creation', () => {
 
     expect(exchange.status).toBe(201);
     // Hop 1: form -> request payload.
-    expect(exchange.request).toMatchObject(expectedRequest(user, lang));
+    expect(
+      mismatchedFields(exchange.request, expectedRequest(user, lang)),
+      'request fields that differ from the form',
+    ).toEqual([]);
     // Hop 2: contract, then request values -> response body.
     const { account } = CreationResponse.parse(exchange.body);
-    expect(account).toMatchObject(expectedAccount(user, lang));
+    expect(
+      mismatchedFields(account, expectedAccount(user, lang)),
+      'response fields that differ from the form',
+    ).toEqual([]);
     // The password must not come back, under any key.
     expect(passwordKeyPaths(exchange.body)).toEqual([]);
 
@@ -55,9 +61,15 @@ test.describe('signup: account creation', () => {
     const exchange = await captureCreation(page, () => p.submit.click());
 
     expect(exchange.status).toBe(201);
-    expect(exchange.request).toMatchObject(expectedRequest(user, lang));
+    expect(
+      mismatchedFields(exchange.request, expectedRequest(user, lang)),
+      'request fields that differ from the form',
+    ).toEqual([]);
     const { account } = CreationResponse.parse(exchange.body);
-    expect(account).toMatchObject(expectedAccount(user, lang));
+    expect(
+      mismatchedFields(account, expectedAccount(user, lang)),
+      'response fields that differ from the form',
+    ).toEqual([]);
     expect(account.phone).toBe('+15145550123');
     expect(account.leadDistributeConsentAgreement).toBe(false);
   });
