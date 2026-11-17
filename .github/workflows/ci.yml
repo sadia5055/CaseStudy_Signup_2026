@@ -6,6 +6,10 @@ on:
     branches: [main]
   workflow_dispatch: # no schedule on purpose: every run creates accounts in QA
 
+# Least privilege: nothing here writes to the repository or needs secrets.
+permissions:
+  contents: read
+
 concurrency:
   group: signup-e2e-${{ github.ref }}
   cancel-in-progress: true
@@ -16,6 +20,8 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -25,8 +31,28 @@ jobs:
       - run: npm run lint
       - run: npm run format:check
 
-  test:
+  # Runs against a local fake server with synthetic canary credentials: no QA accounts, no network.
+  # The QA tests below only start if this passes, so a reporting leak is caught before any account exists.
+  security:
     needs: static
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:security
+
+  test:
+    needs: [static, security]
+    # Pull requests from forks never reach the QA environment: they would create accounts there on every push.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
@@ -42,14 +68,32 @@ jobs:
       # Optional repository variables; the defaults in src/config/env.ts apply when they are empty.
       BASE_URL: ${{ vars.BASE_URL }}
       EMAIL_DOMAIN: ${{ vars.EMAIL_DOMAIN }}
+      # The raw JSON report stays on the runner; only the allowlisted summary built from it is published.
+      PLAYWRIGHT_JSON_OUTPUT_NAME: ${{ runner.temp }}/results.json
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps ${{ matrix.browser }}
-      - run: npx playwright test ${{ matrix.projects }}
-      # Raw Playwright reports are NOT uploaded: they contained generated credentials (docs/07-security-remediation.md).
-      # A sanitized summary replaces them in a later change.
+      - run: npx playwright test ${{ matrix.projects }} --reporter=list,json
+
+      # Raw Playwright reports, traces and screenshots are never uploaded (docs/07-security-remediation.md).
+      - name: Build the sanitized summary
+        if: always()
+        run: |
+          node scripts/summarize-results.mjs "$PLAYWRIGHT_JSON_OUTPUT_NAME" test-summary
+          cat test-summary/test-summary.md >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload gate (fails if anything credential-shaped is found)
+        if: always()
+        run: node security/upload-gate.mjs test-summary
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-summary-${{ matrix.name }}
+          path: test-summary/
+          retention-days: 14
