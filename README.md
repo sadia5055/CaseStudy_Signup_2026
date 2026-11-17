@@ -71,7 +71,7 @@ Language is a Playwright project (`en`, `fr`), so there is one set of specs and 
 
 ## Results so far
 
-- Local, Windows, Chromium: **52/52 passed on three consecutive full runs** (parallel, 4 workers), after the fixes recorded in [`docs/06-review.md`](docs/06-review.md).
+- Local, Windows, Chromium: **52/52 passed on three consecutive full runs** (parallel, 4 workers), and again on a fourth run with the final committed code. A fresh `git clone` + `npm ci` passes typecheck, lint and format checks and runs the tests. Fixes made along the way are in [`docs/06-review.md`](docs/06-review.md).
 - UI specs: 120/120 over three repeats of both languages.
 - Mutation check: changing one expected value (`preferredLanguage`) fails P-01 with a field-level diff.
 - **GitHub Actions workflow is written but has not run.** Whether GitHub-hosted runners can reach QA is unknown until it is pushed.
