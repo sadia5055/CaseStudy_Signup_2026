@@ -51,15 +51,5 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps ${{ matrix.browser }}
       - run: npx playwright test ${{ matrix.projects }}
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: playwright-report-${{ matrix.name }}
-          path: playwright-report/
-          retention-days: 14
-      - uses: actions/upload-artifact@v4
-        if: failure()
-        with:
-          name: failure-screenshots-${{ matrix.name }}
-          path: test-results/
-          retention-days: 7
+      # Raw Playwright reports are NOT uploaded: they contained generated credentials (docs/07-security-remediation.md).
+      # A sanitized summary replaces them in a later change.
