@@ -2,7 +2,7 @@
 
 Format: context → choice → trade-off. Newest at the bottom.
 
-**D1 — Playwright + TypeScript.** The brief allows Cypress or Playwright, TypeScript preferred. Playwright has built-in projects (used for languages), network interception on the same page, and parallel workers. Trade-off: the author's strongest stack is Python; TypeScript was chosen because the role prefers it, and the suite stays small enough to defend line by line.
+**D1 — Playwright + TypeScript.** The brief allows Cypress or Playwright, TypeScript preferred. Playwright has built-in projects (used for languages), network interception on the same page, and parallel workers. Trade-off: TypeScript is the language nesto prefers, and the suite is kept small enough to defend line by line.
 
 **D2 — Language as Playwright projects.** Alternatives: duplicate spec files (drift), a `LANG` env var read inside tests (hidden branching), a loop over languages inside each spec (unreadable reports). Projects give one command per language, separate report entries and no branching in specs. Trade-off: everything runs twice, so account-creating tests are kept few.
 
