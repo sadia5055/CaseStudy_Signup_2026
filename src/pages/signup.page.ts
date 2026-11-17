@@ -40,6 +40,46 @@ export class SignupPage {
     this.backendError = page.getByText(copy.backendError).first();
   }
 
+  /** Pixels by which the page is wider than the viewport; 0 means no horizontal scrolling. */
+  async horizontalOverflow(): Promise<number> {
+    return this.page.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    );
+  }
+
+  /** Every control a user must reach to complete the form. */
+  get controls(): Locator[] {
+    return [
+      this.firstName,
+      this.lastName,
+      this.phone,
+      this.province,
+      this.email,
+      this.password,
+      this.passwordConfirmation,
+      this.consent,
+      this.submit,
+    ];
+  }
+
+  /**
+   * Switches to the other language. Wide screens show a header link; narrow screens hide it behind
+   * the hamburger menu, where it is a "Language" picker. The branch follows what is visible, not
+   * the device name, so it also holds for tablets and resized windows.
+   */
+  async switchLanguage(): Promise<void> {
+    const burger = this.page.getByTestId('open-burger-menu');
+    const headerLink = this.page.getByRole('link', { name: this.copy.languageToggle, exact: true });
+    await expect(burger.or(headerLink)).toBeVisible();
+    if (await burger.isVisible()) {
+      await burger.click();
+      await this.page.getByRole('button', { name: 'Menu', exact: true }).click();
+      await this.page.getByRole('menuitemradio', { name: this.copy.otherLanguageName, exact: true }).click();
+    } else {
+      await headerLink.click();
+    }
+  }
+
   async goto(): Promise<void> {
     // The form is still re-initialised after hydration, once the geolocation lookup answers. Values
     // typed before that are wiped, which looks like a validation bug but is a timing issue

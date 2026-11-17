@@ -19,6 +19,7 @@ export const en: Copy = {
   submit: 'Create your account',
   passwordHint: /12.*32.*(uppercase).*(lowercase).*(number)/i,
   languageToggle: 'FR',
+  otherLanguageName: 'French',
   errors: {
     required: 'The field is required',
     invalidName: 'Invalid name',

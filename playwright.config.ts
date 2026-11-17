@@ -4,6 +4,21 @@ import type { TestOptions } from './src/fixtures';
 
 const isCI = Boolean(process.env.CI);
 
+const languages = [
+  { lang: 'en', locale: 'en-CA' },
+  { lang: 'fr', locale: 'fr-CA' },
+] as const;
+
+// The signup page is customer-facing with a large share of mobile traffic, so phones and the
+// Safari engine are first-class targets, not an afterthought.
+const targets = [
+  { suffix: '', device: 'Desktop Chrome' },
+  { suffix: '-firefox', device: 'Desktop Firefox' },
+  { suffix: '-webkit', device: 'Desktop Safari' },
+  { suffix: '-android', device: 'Pixel 7' },
+  { suffix: '-iphone', device: 'iPhone 14' },
+] as const;
+
 export default defineConfig<TestOptions>({
   testDir: './tests',
   fullyParallel: true,
@@ -26,9 +41,13 @@ export default defineConfig<TestOptions>({
     trace: 'off',
     video: 'off',
   },
-  // Language is a project, not a branch in the specs: `--project=fr` runs French only.
-  projects: [
-    { name: 'en', use: { ...devices['Desktop Chrome'], lang: 'en', locale: 'en-CA' } },
-    { name: 'fr', use: { ...devices['Desktop Chrome'], lang: 'fr', locale: 'fr-CA' } },
-  ],
+  // Project = language x device. Language is a project, not a branch in the specs, so
+  // `--project="fr*"` runs French on every device and `--project=fr-iphone` runs one combination.
+  // Plain `en` / `fr` are desktop Chrome.
+  projects: targets.flatMap((target) =>
+    languages.map(({ lang, locale }) => ({
+      name: `${lang}${target.suffix}`,
+      use: { ...devices[target.device], lang, locale },
+    })),
+  ),
 });

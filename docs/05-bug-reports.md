@@ -1,6 +1,6 @@
 # 05 — Bug reports
 
-Environment for all items: `https://app.qa.nesto.ca`, desktop Chromium, observed 2026-11-16. Section A items were reproduced directly on the page; section B items are behaviour that may be intentional and need an answer from nesto.
+Environment for all items: `https://app.qa.nesto.ca`, observed 2026-11-16/17 in desktop Chromium; BUG-5 and C-8 on the Pixel 7 emulation. Section A items were reproduced directly on the page; section B items are behaviour that may be intentional and need an answer from nesto.
 
 The automated tests pin current messages where a message is needed for a check (for example "Minimum of 12 letters required"). They do not pin text that looks wrong: the FR password hint is matched by pattern, so fixing the typo will not break the suite.
 
@@ -40,6 +40,15 @@ The automated tests pin current messages where a message is needed for a check (
 - **Evidence:** option list read on 2026-11-16.
 - **Severity:** Trivial (copy).
 
+### BUG-5 — Hamburger button has an English accessible name on the French page
+
+- **Preconditions:** viewport narrow enough for the hamburger menu (Pixel 7 emulation, 412 px).
+- **Steps:** open `/fr/signup`; read the accessible name of the menu button (`data-testid="open-burger-menu"`).
+- **Actual:** `aria-label="open burger menu"`, identical to the English page.
+- **Expected:** a French name (for example "ouvrir le menu"), like the rest of the page.
+- **Evidence:** attribute read in the mobile probe, EN and FR.
+- **Severity:** Low. Screen-reader users on the French page hear English for the main navigation control; French parity is a legal expectation, and phones are the main traffic.
+
 ## B. Needs clarification (not logged as defects)
 
 | # | Observation | Question for nesto |
@@ -50,4 +59,5 @@ The automated tests pin current messages where a message is needed for a check (
 | C-4 | The hidden field `createdAt` is submitted as `"LOGIN"` and returned as `account.createdAt: "LOGIN"`, while the real creation time is `account.created`. | Is `createdAt` a source/origin label that was misnamed? |
 | C-5 | The FR page logo links to `/`, same as EN; the FR "Connectez-vous" link goes to `/fr`. | Does `/` redirect French visitors to `/fr`? Not checked. |
 | C-6 | An empty phone number shows "Invalid value" rather than "required". | Intended wording? |
+| C-8 | On phones the language picker button has `aria-label="Menu"`, so assistive technology announces "Menu" instead of the visible "Language / English"; voice-control users cannot say what they see. | Intended name? (WCAG 2.5.3, label in name.) |
 | C-7 | Email domain `example.com` is rejected with `422 placeholder email detected`. | Expected behaviour; recorded because it forced the choice of a throwaway domain (D6). Is `mailinator.com` acceptable to nesto? |

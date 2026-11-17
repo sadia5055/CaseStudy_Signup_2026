@@ -14,6 +14,15 @@ A second pass over the finished work, written as a skeptical reviewer. Each item
 | 6 | Several documents said more than was observed: "validation runs on submit" (blur was not tested); the plan assumed a custom test-id attribute (it is the default `data-testid`); a French logo link was listed as a defect (EN uses the same `/`); D12 mentioned traces that are off; the strategy gave the wrong test count. | Re-verifying each claim against the page and the code. | Wording narrowed, logo moved to "needs clarification", D12 and strategy corrected. |
 | 7 | The first discovery run reported "silent failure" on a 422. | Rerun with a longer wait: the toast had not rendered yet when the probe looked. | Not a defect; the generic error is shown (I-01a asserts it). |
 
+## Found during the device pass
+
+| # | Finding | How it was found | Outcome |
+|---|---|---|---|
+| 8 | F-04 failed on all four phone projects: the header language link is replaced by a hamburger-menu picker on narrow screens. | First run on Pixel 7 / iPhone 14: 4 failures, everything else green. | Test gap, not an app bug. `switchLanguage()` follows what is visible ([D17](04-decisions.md)). |
+| 9 | I first concluded the mobile language control was a non-focusable `DIV` that did nothing when tapped. Both conclusions were wrong. | Re-probing: it is a `<button aria-haspopup>`, and its popup items have role `menuitemradio`; my search had looked for `menuitem` and `option`. | Not reported as a bug. Recorded here because a quick probe nearly produced a false defect. |
+| 10 | Real accessibility findings on phones: the hamburger button's `aria-label` is English on the French page; the language picker button is named "Menu". | Attribute reads in both languages. | BUG-5 (confirmed) and C-8 (needs clarification). |
+| 11 | The new layout checks could pass vacuously if the overflow measurement could not see overflow. | At 200 px the page reported 0, which proved nothing. | Injected a 2000 px element: 0 → 1610. The measurement works ([D18](04-decisions.md)). |
+
 ## Checked and holding
 
 - **Assertions can fail.** Changing the expected `preferredLanguage` made P-01 fail with `- "fr" / + "en"`; reverted.
@@ -32,7 +41,8 @@ A second pass over the finished work, written as a skeptical reviewer. Each item
 | D | I-01a depends on a backend rule about placeholder domains. | It tests a real rejection without mocking; it will need revising if the rule changes. |
 | E | Error messages pin the current "letters" wording (BUG-3). | The tests need some expected text; the hint with the typo is matched by pattern instead. |
 | F | CI has not run. | Cannot be verified before pushing; the README says so. |
-| G | Desktop Chromium only; client-side validation only. | Scope of the exercise and the cost of extra load on a shared QA environment. |
+| G | Client-side validation only. | Server-side checks would mean bypassing the form. |
+| H | Phones are Playwright emulations, not real devices; tablets, landscape and the hamburger breakpoint width are not covered. | Real devices need a device cloud; listed as the next step. A full run also creates 30 accounts in QA, so `npm run test:chrome` exists for quick runs. |
 
 ## Open
 

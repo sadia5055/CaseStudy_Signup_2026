@@ -91,6 +91,13 @@ Only one application endpoint is involved in signup.
 Server-generated: `account.id`, `account.rid`, `account.created`, `account.updated`, `account.role` (`borrower`), `account.tenant`, and `token.*` (access token, refresh token, expiry — secrets, never stored).
 The request also carries tracking fields (`anonymousAccountId`, `gaClientId`, `utm*`, `marketingChannel`, `formName`). They vary per session and are not asserted.
 
+## Responsive behaviour (Pixel 7 412 px, iPhone 14 390 px)
+
+- The header collapses to a hamburger button (`data-testid="open-burger-menu"`). The menu lists How it works, Careers, Terms, Privacy, a **Language** picker and Login.
+- The language picker is a `<button aria-haspopup="true">` whose popup items have role `menuitemradio` ("English" / "French"; in French "Anglais" / "Français"). The wide-screen header link is not present.
+- No horizontal overflow in either language (page width = viewport width); the full form, consent checkbox and full-width submit button fit the screen.
+- Accessible names: the hamburger button's `aria-label` is the English "open burger menu" on the French page too, and the language picker button is named "Menu" instead of its visible "Language / English" (BUG-5, C-8).
+
 ## Technical constraints
 
 - **Hydration race.** The form is a Next.js page. Filling fields before hydration drops values (seen as unrelated "required" errors in the first probe run). Tests need a hydration signal before filling.
@@ -106,7 +113,7 @@ The request also carries tracking fields (`anonymousAccountId`, `gaClientId`, `u
 2. Why does the consent checkbox about *partners* set `emailConsent: true` while `partnerAgreement` stays `false`, and why is `emailConsent` absent from the response?
 3. Does the French consent text, which adds "si nous ne sommes pas en mesure de vous fournir nos services", match the English legal meaning?
 4. Is there a documented phone rule for non-Canadian countries? Only Canada (default) was explored.
-5. Which browsers and viewports are supported? Only desktop Chromium was used.
+5. Which browsers and viewports are supported? Discovery used desktop Chromium; the suite now also runs Firefox, WebKit and Pixel 7 / iPhone 14 emulations. The width at which the header switches to the hamburger menu was not measured.
 6. Is the endpoint callable without a browser session? Not tested; server-side validation parity is therefore not covered (see `02-test-strategy.md`).
 
 ## Observed issues versus potential risks

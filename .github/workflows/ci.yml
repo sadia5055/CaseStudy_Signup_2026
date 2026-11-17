@@ -4,16 +4,40 @@ on:
   pull_request:
   push:
     branches: [main]
-  workflow_dispatch: # manual only on purpose: no schedule, because every run creates accounts in QA
+  workflow_dispatch: # no schedule on purpose: every run creates accounts in QA
 
 concurrency:
   group: signup-e2e-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  test:
+  static:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm run format:check
+
+  test:
+    needs: static
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false # one browser failing must not hide the others
+      matrix:
+        include:
+          - { name: chrome, browser: chromium, projects: '--project=en --project=fr' }
+          - { name: firefox, browser: firefox, projects: '--project=en-firefox --project=fr-firefox' }
+          - { name: webkit, browser: webkit, projects: '--project=en-webkit --project=fr-webkit' }
+          - { name: android, browser: chromium, projects: '--project=en-android --project=fr-android' }
+          - { name: iphone, browser: webkit, projects: '--project=en-iphone --project=fr-iphone' }
     env:
       # Optional repository variables; the defaults in src/config/env.ts apply when they are empty.
       BASE_URL: ${{ vars.BASE_URL }}
@@ -25,20 +49,17 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npx playwright install --with-deps chromium
-      - run: npm run typecheck
-      - run: npm run lint
-      - run: npm run format:check
-      - run: npm test
+      - run: npx playwright install --with-deps ${{ matrix.browser }}
+      - run: npx playwright test ${{ matrix.projects }}
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: playwright-report
+          name: playwright-report-${{ matrix.name }}
           path: playwright-report/
           retention-days: 14
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
-          name: failure-screenshots
+          name: failure-screenshots-${{ matrix.name }}
           path: test-results/
           retention-days: 7

@@ -19,6 +19,7 @@ export const fr: Copy = {
   submit: 'Créez votre compte',
   passwordHint: /12.*32.*majuscule.*minuscule.*chiffre/i,
   languageToggle: 'EN',
+  otherLanguageName: 'Anglais',
   errors: {
     required: 'Ce champ est obligatoire.',
     invalidName: 'Nom invalide',

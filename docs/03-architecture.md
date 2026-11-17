@@ -6,7 +6,7 @@ Playwright Test + TypeScript (strict). One runtime dependency besides Playwright
 
 ```
 tests/                       what is verified — arrange / act / assert, no selectors, no URLs
-  ui/           fields.spec.ts · validation.spec.ts
+  ui/           fields.spec.ts · validation.spec.ts · layout.spec.ts
   integration/  signup-create.spec.ts · signup-failures.spec.ts
         │ imports `test`, `expect` from
 src/fixtures/index.ts        extended test: lang, copy, signupPage, newUser
@@ -19,7 +19,7 @@ src/api/                     Integration layer: knows the HTTP contract, not the
 src/data/user.ts             `SignupUser` type, `buildUser(overrides)`, unique disposable email
 src/i18n/                    en.ts, fr.ts, copy.ts — one `Copy` type, compiler enforces parity
 src/config/env.ts            BASE_URL, EMAIL_DOMAIN with defaults, validated once
-playwright.config.ts         projects `en` and `fr`
+playwright.config.ts         projects = language × device (en, en-firefox, en-webkit, en-android, en-iphone, and the same for fr)
 ```
 
 Dependencies point down only. Specs never touch raw selectors; the page object never inspects network traffic; the API layer never touches the DOM. That is the whole rule, and it is what keeps a failure attributable: a locator problem fails in `pages/`, a contract problem fails in `api/`.
@@ -46,7 +46,8 @@ The schema validates only what the tests rely on (`passthrough`), plus the rule 
 
 - One page object, no base page or component classes: there is one page.
 - `getByLabel`/`getByRole` first; `data-testid` only for the province select and the submit button where the accessible name is weaker. Field ids are generated (`field-8`) and never used.
-- Language is a project, not a branch in specs and not a duplicated folder. `npx playwright test --project=fr` runs French only.
+- Language and device are projects, not branches in specs and not duplicated folders. `--project="fr*"` runs French on every device; `--project=fr-iphone` runs one combination.
+- Specs never ask "is this a phone?". Where the layout differs (the language switch moves into a hamburger menu on narrow screens), the page object branches on what is visible (`switchLanguage()`), so the same spec holds for tablets and resized windows too.
 - Tests are independent: each creates its own data, nothing is shared or ordered, so `fullyParallel` is on. Account-creating tests are the only ones that write to QA.
 - No retries locally; one retry in CI so a transient network error is visible in the report without hiding a real failure.
 
@@ -62,5 +63,5 @@ Rejected alternatives and reasons are in [`04-decisions.md`](04-decisions.md).
 | White-label partner tenants / another language | new i18n file + project; specs unchanged (the app is multi-tenant: `_tenants/[tenant]`) |
 | Contract ownership | replace `account.schema.ts` with types generated from nesto's OpenAPI, or consumer-driven contracts |
 | Downstream integrations (email, CRM, identity) | separate `tests/integration/*` specs using a test inbox or stubs; the signup suite keeps stopping at the 201 |
-| Suite size | tags (`@smoke`, `@integration`), sharding, Firefox/WebKit and mobile projects |
+| Suite size | tags (`@smoke`, `@integration`), sharding; a real-device cloud added as further projects |
 | Quality signals | axe checks, flake tracking, trend reporting from CI artifacts |

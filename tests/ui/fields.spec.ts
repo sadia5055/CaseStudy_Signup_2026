@@ -34,10 +34,10 @@ test.describe('signup form: fields and labels', () => {
     await expect(page.getByText(copy.passwordHint)).toBeVisible();
   });
 
-  test('F-04 switches to the other language', async ({ signupPage: p, page, lang, copy }) => {
+  test('F-04 switches to the other language', async ({ signupPage: p, page, lang }) => {
     await expect(p.submit).toBeVisible();
     const target = copies[otherLang(lang)];
-    await page.getByRole('link', { name: copy.languageToggle, exact: true }).click();
+    await p.switchLanguage();
     await expect(page).toHaveURL(new RegExp(`${target.path}$`));
     await expect(page.getByRole('heading', { name: target.heading })).toBeVisible();
     await expect(page.locator('html')).toHaveAttribute('lang', target.htmlLang);

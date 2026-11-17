@@ -24,7 +24,7 @@ Trade-off: a little more setup (`tsconfig`, typed ESLint) than plain JavaScript,
 
 **D8 — One page object, no base classes.** One page under test. A hierarchy would be structure without content.
 
-**D9 — Chromium only.** Brief does not require cross-browser; every extra browser doubles the account-creating load on a shared QA environment. Listed as future work.
+**D9 — Five device profiles × two languages in the default run.** The page is customer-facing with heavy mobile traffic, so desktop Chrome, Firefox, WebKit, a Pixel 7 (Chromium, touch) and an iPhone 14 (WebKit, touch) all run by default. Alternative considered: Chromium only plus a "later" list; rejected because the first phone run immediately found a test gap (the language switch is behind a hamburger menu) and a mobile-only layout bug would otherwise ship unseen. Trade-off: a full run is 290 tests and creates 30 accounts in QA; `npm run test:chrome` gives a 6-account quick run. These are emulations, not real devices (README limitation).
 
 **D10 — Default `data-testid`, used sparingly.** The app already exposes `data-testid`, which is Playwright's default, so no config is needed. Accessible locators come first; test ids are for controls whose accessible name is weak.
 
@@ -39,3 +39,7 @@ Trade-off: a little more setup (`tsconfig`, typed ESLint) than plain JavaScript,
 **D15 — CI is manual/PR/push only, no schedule.** Every run creates accounts in a shared QA environment, and nesto has not confirmed that runs from GitHub-hosted machines are welcome (assumption A7). A nightly job should wait for that answer.
 
 **D16 — Known leak accepted: `error-context.md`.** When a test fails, Playwright writes a page snapshot that includes field values, so the generated password and email appear in that file, in the HTML report and in the CI failure artifact. There is no switch to turn it off (checked in Playwright 1.65). Accepted because passwords are random per test, the accounts are throwaway QA accounts holding fake data, and CI retention is 7–14 days. No signup token appears in any artifact (searched the report for JWT-shaped strings: none). Do not point this suite at an environment with real data.
+
+**D17 — The language switch branches on visibility, not on device.** On wide screens the switch is a header link ("FR"/"EN"); on phones it is a "Language" picker inside the hamburger menu (a React Aria menu button whose items have role `menuitemradio`). `switchLanguage()` waits until either control is visible and uses whichever is. Alternatives: an `isMobile` check in the spec (breaks for tablets and resized windows, and puts branching in tests) or separate mobile specs (duplication). Found because F-04 failed on all four phone projects.
+
+**D18 — Layout checks are measurements, not screenshots.** L-01…L-03 assert numbers (page overflow, control boxes, longest error message) that fail with a value, and run on every project. Visual-diff screenshots were rejected: they need baselines per browser, language and device (20 images), and any font rendering difference makes them noisy. Trade-off: the checks catch overflow and clipping, not visual polish. The overflow measurement was validated by injecting a 2000px element (0 → 1610 px).

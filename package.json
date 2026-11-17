@@ -4,14 +4,16 @@
   "description": "Playwright + TypeScript tests for the nesto QA signup page (EN/FR), including the account-creation API.",
   "scripts": {
     "test": "playwright test",
-    "test:en": "playwright test --project=en",
-    "test:fr": "playwright test --project=fr",
+    "test:en": "playwright test --project=\"en*\"",
+    "test:fr": "playwright test --project=\"fr*\"",
     "test:ui": "playwright test tests/ui",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "format": "prettier --write src tests playwright.config.ts eslint.config.mjs tsconfig.json",
     "format:check": "prettier --check src tests playwright.config.ts eslint.config.mjs tsconfig.json",
-    "report": "playwright show-report"
+    "report": "playwright show-report",
+    "test:chrome": "playwright test --project=en --project=fr",
+    "test:mobile": "playwright test --project=\"*-android\" --project=\"*-iphone\""
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

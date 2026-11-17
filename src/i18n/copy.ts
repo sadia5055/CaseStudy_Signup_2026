@@ -41,8 +41,10 @@ export interface Copy {
    * a typo (see docs/05-bug-reports.md), and the test must not encode that as correct.
    */
   passwordHint: RegExp;
-  /** Text of the header link that switches to the other language. */
+  /** Text of the header link that switches to the other language (wide screens). */
   languageToggle: string;
+  /** Name of the other language as listed in the mobile menu's language picker, in this language. */
+  otherLanguageName: string;
   errors: ErrorCopy;
   /** Generic message shown when the backend rejects or fails the request. */
   backendError: string;
