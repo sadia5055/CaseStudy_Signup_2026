@@ -19,8 +19,8 @@ export interface SignupUser {
 const runId = Date.now().toString(36);
 
 /** Unique disposable address: qa.auto.<run>.<worker>.<random>@<domain> */
-export function uniqueEmail(workerIndex: number): string {
-  return `qa.auto.${runId}.${workerIndex}.${randomBytes(3).toString('hex')}@${env.emailDomain}`;
+export function uniqueEmail(workerIndex: number, domain: string = env.emailDomain): string {
+  return `qa.auto.${runId}.${workerIndex}.${randomBytes(3).toString('hex')}@${domain}`;
 }
 
 /**

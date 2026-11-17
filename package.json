@@ -9,8 +9,8 @@
     "test:ui": "playwright test tests/ui",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
-    "format": "prettier --write .",
-    "format:check": "prettier --check .",
+    "format": "prettier --write src tests playwright.config.ts eslint.config.mjs tsconfig.json",
+    "format:check": "prettier --check src tests playwright.config.ts eslint.config.mjs tsconfig.json",
     "report": "playwright show-report"
   },
   "devDependencies": {

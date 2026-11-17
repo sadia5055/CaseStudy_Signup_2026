@@ -22,7 +22,7 @@ export class SignupPage {
   readonly backendError: Locator;
 
   constructor(
-    private readonly page: Page,
+    readonly page: Page,
     readonly copy: Copy,
   ) {
     const byLabel = (text: string) => page.getByLabel(text, { exact: true });

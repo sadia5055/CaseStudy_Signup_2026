@@ -8,7 +8,7 @@ Accounts created during discovery: 2 (`id` 1065672 EN, 1065673 FR), both throwaw
 
 **Language.** Encoded in the URL: `/signup` is English, `/fr/signup` is French. `<html lang>` and the page title follow it. The `FR` link in the header navigates to the French URL. The language is sent to the API (`language` in the request, `preferredLanguage` in the response).
 
-**Validation timing.** Validation runs on submit. Errors appear under the field (`aria-invalid="true"`, `aria-describedby` → message element). Native `required` is not used.
+**Validation timing.** Errors appeared after submit. Tabbing out of empty First name and Last name did not flag them; other fields were not checked for blur behaviour. Errors render under the field (`aria-invalid="true"`, `aria-describedby` → message element). Native `required` is not used.
 
 **Success.** `POST /api/accounts` returns 201, the browser is redirected to `/getaquote` (`/getaquote/fr` in French) and the user is logged in through Auth0 (auth cookies set). No email-verification step is shown.
 
@@ -118,10 +118,12 @@ The request also carries tracking fields (`anonymousAccountId`, `gaClientId`, `u
 | 1 | FR password hint reads "doit contenir **au entre** 12 et 32 caractères" | Low (copy) |
 | 2 | Page title after signup is "Get A Quote" on `/getaquote/fr` (English title on French page) | Low (i18n) |
 | 3 | Messages say "12 **letters**" / "32 letters" for a rule about characters (digits count too); same in FR "lettres" | Low (copy) |
-| 4 | FR logo link points to `/` instead of `/fr` | Low (navigation) |
-| 5 | Province "British-Columbia" (hyphen) in EN | Trivial (copy) |
-| 6 | EN and FR consent text differ in meaning (open question 3) | Needs clarification, potentially legal |
-| 7 | Duplicate email returns `400 bad format` (open question 1) | Needs clarification |
-| 8 | Hidden field `createdAt` carries the value `LOGIN` (open question: naming/contract) | Needs clarification |
+| 4 | Province "British-Columbia" (hyphen) in EN | Trivial (copy) |
+| 5 | EN and FR consent text differ in meaning (open question 3) | Needs clarification, potentially legal |
+| 6 | Duplicate email returns `400 bad format` (open question 1) | Needs clarification |
+| 7 | Hidden field `createdAt` carries the value `LOGIN` (open question: naming/contract) | Needs clarification |
+| 8 | FR logo links to `/` (same as EN) while the FR "Connectez-vous" link goes to `/fr`; `/` may redirect by locale, not checked | Needs clarification |
+
+Details, evidence and severity rationale: [`05-bug-reports.md`](05-bug-reports.md).
 
 **Potential risks, not tested:** server-side validation if the client is bypassed; concurrent duplicate submissions; double-click on submit; behaviour for non-Canadian phone countries; accessibility beyond label/`aria-invalid` semantics; mobile viewport; email case normalisation (`A@B.com` vs `a@b.com`).
