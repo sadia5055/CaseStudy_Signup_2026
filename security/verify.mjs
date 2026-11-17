@@ -134,6 +134,7 @@ try {
     C3: 'unexpected',
     C4: 'unexpected',
     C5: 'expected',
+    C6: 'unexpected',
   };
   for (const [id, want] of Object.entries(expectedSafe)) {
     check(

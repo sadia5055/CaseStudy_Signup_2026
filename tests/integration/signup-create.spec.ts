@@ -40,7 +40,7 @@ test.describe('signup: account creation', () => {
 
     // After the 201 the app signs the user in through Auth0 (a cross-origin round trip to
     // auth.qa.nesto.ca) before landing on the quote page. That hop took over 10 s on CI runners.
-    await expect(page).toHaveURL(new RegExp(`${copy.redirectPath}$`), { timeout: AUTH_REDIRECT_TIMEOUT_MS });
+    await p.expectToLandOn(copy.redirectPath, AUTH_REDIRECT_TIMEOUT_MS);
   });
 
   test('P-02 keeps accents, normalises the phone, and records declined consent', async ({

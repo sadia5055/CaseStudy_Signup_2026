@@ -44,7 +44,7 @@ const page = (mode) => `<!doctype html>
       passwordSpecified: true, anonymousAccountId: 'anon-' + Math.random().toString(16).slice(2), createdAt: 'LOGIN' };
     const res = await fetch('/api/accounts', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
     // the real app signs the user in through Auth0 before it navigates, which takes far longer than this
-    if (res.status === 201) setTimeout(() => { location.href = '/getaquote'; }, 800);
+    if (res.status === 201) setTimeout(() => { location.href = '/getaquote${mode === 'redirect-code' ? `?code=${TOKEN}&state=${TOKEN}` : ''}'; }, 800);
   });
 </script></body></html>`;
 

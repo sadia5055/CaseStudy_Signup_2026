@@ -76,6 +76,16 @@ export class SignupPage {
   }
 
   /**
+   * Waits until the page is on `path`. A failure prints the path only: `toHaveURL` would print the full URL,
+   * and after signup the app passes through an OAuth login whose URLs carry `code`, `state` and client ids.
+   */
+  async expectToLandOn(path: string, timeout?: number): Promise<void> {
+    await expect
+      .poll(() => new URL(this.page.url()).pathname, { message: `the page did not land on ${path}`, timeout })
+      .toBe(path);
+  }
+
+  /**
    * Switches to the other language. Wide screens show a header link; narrow screens hide it behind
    * the hamburger menu, where it is a "Language" picker. The branch follows what is visible, not
    * the device name, so it also holds for tablets and resized windows.

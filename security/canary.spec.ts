@@ -71,6 +71,20 @@ test.describe('a response that breaks the contract', () => {
   });
 });
 
+test.describe('a redirect whose URL carries an auth code', () => {
+  test.use({ extraHTTPHeaders: { 'x-fake-mode': 'redirect-code' } });
+
+  test('C6 fails (on purpose): redirect assertion on a URL with a code in its query', async ({
+    signupPage: p,
+    newUser,
+    page,
+  }) => {
+    await p.fillForm(newUser({ email, password }));
+    await captureCreation(page, () => p.submit.click());
+    await p.expectToLandOn('/somewhere-else', 4_000);
+  });
+});
+
 test.describe('a backend rejection that echoes the email', () => {
   test.use({ extraHTTPHeaders: { 'x-fake-mode': 'echo-422' } });
 
