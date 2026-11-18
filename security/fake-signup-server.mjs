@@ -32,7 +32,7 @@ const page = (mode) => `<!doctype html>
   ${
     mode === 'sticky-clear'
       ? `// this mode empties the email and password fields right after they are set, so the value is never kept
-  document.addEventListener('input', (e) => { const t = e.target; if (t.type === 'password' || t.name === 'email') setTimeout(() => { t.value = ''; }, 0); });`
+  document.addEventListener('input', (e) => { const t = e.target; if (t.type === 'password' || t.name === 'email') t.value = ''; });`
       : ''
   }
   document.getElementById('f').addEventListener('submit', async (e) => {
