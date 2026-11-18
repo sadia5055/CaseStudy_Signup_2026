@@ -68,8 +68,6 @@ jobs:
       # Optional repository variables; the defaults in src/config/env.ts apply when they are empty.
       BASE_URL: ${{ vars.BASE_URL }}
       EMAIL_DOMAIN: ${{ vars.EMAIL_DOMAIN }}
-      # The raw JSON report stays on the runner; only the allowlisted summary built from it is published.
-      PLAYWRIGHT_JSON_OUTPUT_NAME: ${{ runner.temp }}/results.json
     steps:
       - uses: actions/checkout@v4
         with:
@@ -80,20 +78,31 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps ${{ matrix.browser }}
-      - run: npx playwright test ${{ matrix.projects }} --reporter=list,json
+      - name: Configure report output
+        run: echo "PLAYWRIGHT_JSON_OUTPUT_NAME=$RUNNER_TEMP/results.json" >> "$GITHUB_ENV"
 
-      # Raw Playwright reports, traces and screenshots are never uploaded (docs/07-security-remediation.md).
+      - name: Run signup tests
+        run: npx playwright test ${{ matrix.projects }} --reporter=list,json
+      
+      # Raw reports, traces, and screenshots are never uploaded.(docs/07-security-remediation.md)
       - name: Build the sanitized summary
+        id: summary
         if: always()
         run: |
           node scripts/summarize-results.mjs "$PLAYWRIGHT_JSON_OUTPUT_NAME" test-summary
           cat test-summary/test-summary.md >> "$GITHUB_STEP_SUMMARY"
-      - name: Upload gate (fails if anything credential-shaped is found)
+
+      - name: Upload gate
+        id: upload_gate
         if: always()
         run: node security/upload-gate.mjs test-summary
-      - uses: actions/upload-artifact@v4
-        if: always()
+
+      - name: Upload sanitized summary
+        if: ${{ always() && steps.summary.outcome == 'success' && steps.upload_gate.outcome == 'success' }}
+        uses: actions/upload-artifact@v4
         with:
           name: test-summary-${{ matrix.name }}
           path: test-summary/
+          if-no-files-found: error
           retention-days: 14
+
